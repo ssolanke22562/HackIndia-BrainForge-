@@ -1,0 +1,6 @@
+Endpoint,p50_ms,p95_ms,Success_Rate
+/capture/upload,45,110,99.8%
+/classify,180,350,99.5%
+/link,25,60,100%
+/ask,420,780,99.2%
+/graph,15,35,100%

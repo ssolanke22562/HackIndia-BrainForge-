@@ -1,0 +1,4 @@
+Model,Dimensions,Latency_ms,Cost_Per_1M_Tokens,Local_Inference
+all-MiniLM-L6-v2,384,12.4,$0.00,Yes
+bge-small-en-v1.5,384,18.2,$0.00,Yes
+text-embedding-3-small,1536,85.0,$0.02,No
