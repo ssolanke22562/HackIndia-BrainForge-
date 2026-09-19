@@ -15,14 +15,10 @@ DATASET_DIR = Path(__file__).resolve().parent
 
 async def ingest_dataset():
     print("==================================================")
-    print("🚀 SecondSelf Developer Test Dataset Ingestion")
+    print(">> SecondSelf Developer Test Dataset Ingestion")
     print("==================================================")
-    
-    settings.ensure_directories()
-    await init_db()
 
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
+    async with AsyncClient(base_url="http://127.0.0.1:8000", timeout=60.0) as client:
         ingested = []
 
         # 1. Ingest Markdown Notes
@@ -33,7 +29,7 @@ async def ingest_dataset():
             res = await client.post("/capture/note", json={"title": title, "content": content})
             if res.status_code == 200:
                 data = res.json()
-                print(f"✅ [MARKDOWN] Ingested '{title}' (ID: {data['id']})")
+                print(f"[+] [MARKDOWN] Ingested '{title}' (ID: {data['id']})")
                 ingested.append(data["id"])
 
         # 2. Ingest PDFs, DOCX, CSVs, Images, Audio
@@ -54,7 +50,7 @@ async def ingest_dataset():
                         res = await client.post("/capture/upload", files=files)
                         if res.status_code == 200:
                             data = res.json()
-                            print(f"✅ [{folder_name.upper()}] Uploaded '{file_path.name}' (ID: {data['id']})")
+                            print(f"[+] [{folder_name.upper()}] Uploaded '{file_path.name}' (ID: {data['id']})")
                             ingested.append(data["id"])
 
         # 3. Ingest Web Bookmarks
@@ -66,20 +62,19 @@ async def ingest_dataset():
                 res = await client.post("/capture/link", json={"url": bm["url"], "title": bm["title"]})
                 if res.status_code == 200:
                     data = res.json()
-                    print(f"✅ [BOOKMARK] Ingested '{bm['title']}' (ID: {data['id']})")
+                    print(f"[+] [BOOKMARK] Ingested '{bm['title']}' (ID: {data['id']})")
                     ingested.append(data["id"])
 
         print("\n--------------------------------------------------")
-        print(f"🎉 Total Items Ingested: {len(ingested)}")
-        print("⚡ Triggering PARA Batch Classification...")
+        print(f"Total Items Ingested: {len(ingested)}")
+        print(">> Triggering PARA Batch Classification...")
         await client.post("/classify/batch")
         
-        print("🔗 Triggering Semantic Vector Indexing & Linking...")
+        print(">> Triggering Semantic Vector Indexing & Linking...")
         await client.post("/link/all")
 
         print("==================================================")
-        print("✨ SecondSelf is fully seeded with developer data!")
-        print("👉 Open the UI or run 'Ask Brain' queries now.")
+        print("SecondSelf is fully seeded with developer data!")
         print("==================================================")
 
 if __name__ == "__main__":

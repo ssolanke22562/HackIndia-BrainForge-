@@ -201,13 +201,19 @@ async def generate_grounded_answer(
                 messages.extend(conversation_history[-4:])
             messages.append({"role": "user", "content": user_prompt})
 
-            response = await client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=messages,
-                temperature=0.3 if (persona and persona.is_enabled) else 0.2,
-                max_tokens=750
-            )
-            return response.choices[0].message.content, "groq"
+            for candidate_model in ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]:
+                try:
+                    response = await client.chat.completions.create(
+                        model=candidate_model,
+                        messages=messages,
+                        temperature=0.3 if (persona and persona.is_enabled) else 0.2,
+                        max_tokens=750
+                    )
+                    if response.choices and response.choices[0].message.content:
+                        return response.choices[0].message.content, f"groq:{candidate_model}"
+                except Exception as model_err:
+                    logger.debug(f"Groq model {candidate_model} unavailable: {model_err}")
+                    continue
         except Exception as e:
             logger.warning(f"Groq RAG synthesis failed: {e}")
 

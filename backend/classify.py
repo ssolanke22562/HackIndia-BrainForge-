@@ -165,18 +165,25 @@ async def classify_with_groq(title: str, content: str) -> Optional[Classificatio
         client = AsyncGroq(api_key=settings.GROQ_API_KEY)
         
         user_message = f"Title: {title}\nContent snippet:\n{content[:2500]}"
-        response = await client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": PARA_PROMPT},
-                {"role": "user", "content": user_message}
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.1,
-            max_tokens=300
-        )
-        raw_text = response.choices[0].message.content
-        data = clean_and_parse_json(raw_text)
+        for candidate_model in ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]:
+            try:
+                response = await client.chat.completions.create(
+                    model=candidate_model,
+                    messages=[
+                        {"role": "system", "content": PARA_PROMPT},
+                        {"role": "user", "content": user_message}
+                    ],
+                    response_format={"type": "json_object"},
+                    temperature=0.1,
+                    max_tokens=300
+                )
+                raw_text = response.choices[0].message.content
+                data = clean_and_parse_json(raw_text)
+                if data:
+                    break
+            except Exception as model_err:
+                logger.debug(f"Groq classify model {candidate_model} failed: {model_err}")
+                continue
         
         cat = data.get("category", "Resources").strip().title()
         if cat not in ["Projects", "Areas", "Resources", "Archives"]:

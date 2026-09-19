@@ -130,24 +130,29 @@ Respond ONLY with valid JSON.
         try:
             from groq import Groq
             client = Groq(api_key=settings.GROQ_API_KEY)
-            response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": f"Analyze this writing sample:\n\n{sample}"}
-                ],
-                temperature=0.2,
-                response_format={"type": "json_object"}
-            )
-            raw = response.choices[0].message.content
-            parsed = json.loads(raw)
-            return AnalyzeSampleResponse(
-                detected_tone=parsed.get("detected_tone", "Direct & Technical"),
-                detected_role=parsed.get("detected_role", "Knowledge Worker"),
-                suggested_vocabulary=parsed.get("suggested_vocabulary", "key takeaways, trade-offs, architecture"),
-                suggested_format=parsed.get("suggested_format", "TL;DR + Bullets"),
-                style_summary=parsed.get("style_summary", "Clear, structured, and focused on practical takeaways.")
-            )
+            for candidate_model in ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "qwen/qwen3.8-27b", "llama-3.3-70b-versatile", "llama-3.1-8b-instant"]:
+                try:
+                    response = client.chat.completions.create(
+                        model=candidate_model,
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": f"Analyze this writing sample:\n\n{sample}"}
+                        ],
+                        temperature=0.2,
+                        response_format={"type": "json_object"}
+                    )
+                    raw = response.choices[0].message.content
+                    parsed = json.loads(raw)
+                    return AnalyzeSampleResponse(
+                        detected_tone=parsed.get("detected_tone", "Direct & Technical"),
+                        detected_role=parsed.get("detected_role", "Knowledge Worker"),
+                        suggested_vocabulary=parsed.get("suggested_vocabulary", "key takeaways, trade-offs, architecture"),
+                        suggested_format=parsed.get("suggested_format", "TL;DR + Bullets"),
+                        style_summary=parsed.get("style_summary", "Clear, structured, and focused on practical takeaways.")
+                    )
+                except Exception as model_err:
+                    logger.debug(f"Groq style model {candidate_model} error: {model_err}")
+                    continue
         except Exception as e:
             logger.warning(f"Groq style analysis failed: {e}")
 
