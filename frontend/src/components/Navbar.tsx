@@ -1,9 +1,9 @@
 import React from 'react';
-import { Upload, Share2, MessageSquare, History, Database } from 'lucide-react';
+import { Upload, Share2, MessageSquare, History, Database, User } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab: 'capture' | 'graph' | 'ask' | 'history';
-  setActiveTab: (tab: 'capture' | 'graph' | 'ask' | 'history') => void;
+  activeTab: 'capture' | 'graph' | 'ask' | 'history' | 'persona';
+  setActiveTab: (tab: 'capture' | 'graph' | 'ask' | 'history' | 'persona') => void;
   stats?: {
     notes_count: number;
     links_count: number;
@@ -63,6 +63,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <History size={16} />
           <span>History</span>
+        </button>
+        <button
+          className={`nav-pill ${activeTab === 'persona' ? 'active' : ''}`}
+          onClick={() => setActiveTab('persona')}
+        >
+          <User size={16} />
+          <span>My Voice</span>
         </button>
       </nav>
 

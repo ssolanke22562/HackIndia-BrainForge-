@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import settings
 from backend.db.database import get_db, async_session_maker
-from backend.db.models import Note, Chunk, Session as ChatSession, Message, Retrieval
+from backend.db.models import Note, Chunk, Session as ChatSession, Message, Retrieval, UserPersona
 from backend.db.vector_store import vector_store
 from backend.link import get_embedding_model
 
@@ -41,11 +41,36 @@ class AskResponse(BaseModel):
     citations: List[CitationItem]
     knowledge_void: bool = False
     provider_used: str = "offline_synthesis"
+    persona_applied: bool = False
 
-SYSTEM_RAG_PROMPT = """You are SecondSelf, an intelligent Second Brain assistant.
-Answer the user's question accurately and truthfully based EXCLUSIVELY on the provided user knowledge context.
-For every factual claim or insight, you MUST cite the source note using this format: [Note: <note_id>].
-If the provided context does not contain enough information to answer the question, state clearly: "I couldn't find any information about this in your captured notes." Do NOT fabricate any facts or citations.
+def build_rag_system_prompt(persona: Optional[UserPersona] = None) -> str:
+    """Dynamically construct RAG system prompt with user behavioral and voice profile."""
+    base_rules = (
+        "Answer accurately and truthfully based EXCLUSIVELY on the provided user knowledge context.\n"
+        "For every factual claim or insight, you MUST cite the source note using this format: [Note: <note_id>].\n"
+        "If the provided context does not contain enough information to answer the question, state clearly: "
+        '"I couldn\'t find any information about this in your captured notes." Do NOT fabricate any facts or citations.'
+    )
+
+    if not persona or not persona.is_enabled:
+        return f"You are SecondSelf, an intelligent Second Brain assistant.\n{base_rules}"
+
+    sample_snippet = f'\n- Writing Style Benchmark: "{persona.writing_sample[:300]}"' if persona.writing_sample else ""
+    return f"""You are SecondSelf — the user's personal AI replica and intellectual alter ego.
+You must synthesize the answer in the USER'S DISTINCTIVE VOICE, TONE, and BEHAVIORAL PROFILE:
+- User Identity: {persona.name} ({persona.role_profession})
+- Communication Tone: {persona.communication_tone}
+- Perspective: {persona.perspective}
+- Preferred Vocabulary / Jargon: {persona.custom_vocabulary or 'Natural and domain-relevant'}
+- Formatting Preference: {persona.response_format or 'Clear and structured'}{sample_snippet}
+
+Behavioral Guidelines:
+1. Speak as the user explaining their own knowledge, notes, and thoughts in their natural style.
+2. Mirror the user's tone, vocabulary habits, and formatting preferences.
+3. Strict Grounding: All factual details MUST originate solely from the provided user context.
+4. Always append the required note citation [Note: <note_id>] after each grounded point.
+
+{base_rules}
 """
 
 def compute_rrf(
@@ -145,9 +170,10 @@ async def hybrid_retrieve(
 async def generate_grounded_answer(
     question: str,
     context_items: List[Dict[str, Any]],
-    conversation_history: List[Dict[str, str]] = None
+    conversation_history: List[Dict[str, str]] = None,
+    persona: Optional[UserPersona] = None
 ) -> Tuple[str, str]:
-    """Generate grounded answer using Groq -> Gemini -> Fallback synthesis."""
+    """Generate grounded answer using Groq -> Gemini -> Fallback synthesis with Persona Voice."""
     if not context_items:
         return "I couldn't find any information about this in your captured notes.", "knowledge_void"
 
@@ -162,13 +188,15 @@ async def generate_grounded_answer(
         "Please provide a clear, accurate, synthesized answer with [Note: <id>] citations after each claim."
     )
 
+    system_prompt = build_rag_system_prompt(persona)
+
     # 1. Try Groq
     if settings.GROQ_API_KEY:
         try:
             from groq import AsyncGroq
             client = AsyncGroq(api_key=settings.GROQ_API_KEY)
             
-            messages = [{"role": "system", "content": SYSTEM_RAG_PROMPT}]
+            messages = [{"role": "system", "content": system_prompt}]
             if conversation_history:
                 messages.extend(conversation_history[-4:])
             messages.append({"role": "user", "content": user_prompt})
@@ -176,8 +204,8 @@ async def generate_grounded_answer(
             response = await client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=messages,
-                temperature=0.2,
-                max_tokens=600
+                temperature=0.3 if (persona and persona.is_enabled) else 0.2,
+                max_tokens=750
             )
             return response.choices[0].message.content, "groq"
         except Exception as e:
@@ -188,7 +216,7 @@ async def generate_grounded_answer(
         try:
             import httpx
             url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
-            prompt_text = f"{SYSTEM_RAG_PROMPT}\n\n{user_prompt}"
+            prompt_text = f"{system_prompt}\n\n{user_prompt}"
             payload = {"contents": [{"parts": [{"text": prompt_text}]}]}
             
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -205,8 +233,9 @@ async def generate_grounded_answer(
         clean_snippet = item["content"].strip().replace("\n", " ")[:200]
         bullet_points.append(f"• Based on **{item['title']}** ({item['category']}): \"{clean_snippet}...\" [Note: {item['note_id']}]")
 
+    prefix = f"SecondSelf ({persona.name if persona else 'Personalized Voice'}):" if (persona and persona.is_enabled) else "SecondSelf Knowledge Synthesis:"
     fallback_answer = (
-        f"Here is what I found in your knowledge base regarding \"{question}\":\n\n" +
+        f"{prefix}\n\nHere is what I found in your knowledge base regarding \"{question}\":\n\n" +
         "\n".join(bullet_points)
     )
     return fallback_answer, "local_extractive"
@@ -218,7 +247,7 @@ async def ask_question_endpoint(
 ):
     """
     Conversational RAG Q&A with hybrid dense+sparse retrieval, RRF ranking,
-    knowledge void detection, and grounded citation synthesis.
+    knowledge void detection, persona behavioral synthesis, and grounded citations.
     """
     question = payload.question.strip()
     if not question:
@@ -252,15 +281,21 @@ async def ask_question_endpoint(
     db.add(user_msg)
     await db.flush()
 
-    # 3. Hybrid Retrieval
+    # 3. Fetch User Persona
+    p_stmt = select(UserPersona).limit(1)
+    p_res = await db.execute(p_stmt)
+    user_persona = p_res.scalars().first()
+
+    # 4. Hybrid Retrieval
     retrieved_items, max_dense_sim = await hybrid_retrieve(question, top_k=payload.top_k, db=db)
 
-    # 4. Knowledge Void Guardrail check
+    # 5. Knowledge Void Guardrail check
     if not retrieved_items or (max_dense_sim < 0.35 and len(retrieved_items) == 0):
         answer_text = "I couldn't find any information about this in your captured notes."
         provider = "knowledge_void"
         citations_response = []
         is_void = True
+        persona_applied = False
     else:
         is_void = False
         # Fetch conversation history for context window
@@ -269,8 +304,14 @@ async def ask_question_endpoint(
         past_msgs = list(reversed(h_res.scalars().all()))
         history_formatted = [{"role": m.role, "content": m.content} for m in past_msgs if m.id != user_msg_id]
 
-        # Generate grounded answer
-        answer_text, provider = await generate_grounded_answer(question, retrieved_items, history_formatted)
+        # Generate grounded answer in persona voice
+        answer_text, provider = await generate_grounded_answer(
+            question, 
+            retrieved_items, 
+            history_formatted, 
+            persona=user_persona
+        )
+        persona_applied = bool(user_persona and user_persona.is_enabled)
 
         # Format citations
         citations_response = [
@@ -317,5 +358,6 @@ async def ask_question_endpoint(
         session_id=session_id,
         citations=citations_response,
         knowledge_void=is_void,
-        provider_used=provider
+        provider_used=provider,
+        persona_applied=persona_applied
     )

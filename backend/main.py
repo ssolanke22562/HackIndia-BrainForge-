@@ -15,6 +15,7 @@ from backend.link import router as link_router
 from backend.build_graph import router as graph_router
 from backend.ask import router as ask_router
 from backend.history import router as history_router
+from backend.persona import router as persona_router
 
 # Configure logging
 logging.basicConfig(
@@ -70,6 +71,7 @@ app.include_router(link_router)
 app.include_router(graph_router)
 app.include_router(ask_router)
 app.include_router(history_router)
+app.include_router(persona_router)
 
 # Global Exception Handler
 @app.exception_handler(Exception)

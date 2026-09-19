@@ -7,6 +7,7 @@ from sqlalchemy import (
     Text,
     Float,
     Integer,
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -109,3 +110,18 @@ class Retrieval(Base):
 
     # Relationships
     message = relationship("Message", back_populates="retrievals")
+
+class UserPersona(Base):
+    __tablename__ = "user_persona"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    name = Column(String(128), nullable=False, default="SecondSelf User")
+    role_profession = Column(String(256), nullable=False, default="Knowledge Worker & Researcher")
+    communication_tone = Column(String(128), nullable=False, default="Direct, technical, and concise")
+    perspective = Column(String(32), nullable=False, default="First-Person (I, my)")
+    custom_vocabulary = Column(Text, nullable=True, default="tradeoffs, architecture, synthesis, high-leverage, action items")
+    writing_sample = Column(Text, nullable=True, default="")
+    response_format = Column(String(256), nullable=False, default="TL;DR summary first, followed by clear bullet points and actionable takeaways")
+    is_enabled = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow, server_default=func.now())
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, server_default=func.now())

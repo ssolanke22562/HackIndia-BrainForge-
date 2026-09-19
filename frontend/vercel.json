@@ -1,7 +1,7 @@
 {
   "rewrites": [
     {
-      "source": "/(capture|classify|link|graph|ask|history|health|api)(.*)",
+      "source": "/(capture|classify|link|graph|ask|history|health|persona|api)(.*)",
       "destination": "https://hackindia-brainforge-3.onrender.com/$1$2"
     },
     {

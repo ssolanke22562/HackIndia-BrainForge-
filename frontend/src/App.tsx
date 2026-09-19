@@ -4,12 +4,13 @@ import { CapturePage } from './pages/CapturePage.tsx';
 import { GraphPage } from './pages/GraphPage.tsx';
 import { AskPage } from './pages/AskPage.tsx';
 import { HistoryPage } from './pages/HistoryPage.tsx';
+import { PersonaPage } from './pages/PersonaPage.tsx';
 import { apiUrl } from './config/api.ts';
 import './styles/index.css';
 import './styles/components.css';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'capture' | 'graph' | 'ask' | 'history'>('capture');
+  const [activeTab, setActiveTab] = useState<'capture' | 'graph' | 'ask' | 'history' | 'persona'>('capture');
   const [serverStatus, setServerStatus] = useState<'healthy' | 'offline' | 'checking'>('checking');
   const [stats, setStats] = useState({ notes_count: 0, links_count: 0 });
 
@@ -49,6 +50,7 @@ export const App: React.FC = () => {
         {activeTab === 'graph' && <GraphPage />}
         {activeTab === 'ask' && <AskPage />}
         {activeTab === 'history' && <HistoryPage />}
+        {activeTab === 'persona' && <PersonaPage />}
       </main>
     </div>
   );

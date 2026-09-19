@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles, BookOpen, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Sparkles, BookOpen, Loader2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { CitationModal } from './CitationModal.tsx';
 import { apiUrl } from '../config/api.ts';
 
@@ -34,12 +34,47 @@ export const ChatBox: React.FC<ChatBoxProps> = ({ sessionId, onSessionCreated })
   const [loading, setLoading] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | undefined>(sessionId);
   const [selectedCitation, setSelectedCitation] = useState<any | null>(null);
+  const [personaInfo, setPersonaInfo] = useState<{ is_enabled: boolean; name: string; tone: string }>({
+    is_enabled: true,
+    name: 'You',
+    tone: 'Direct & Concise'
+  });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Load Persona Settings
+  useEffect(() => {
+    fetch(apiUrl('/persona'))
+      .then((res) => res.json())
+      .then((data) => {
+        if (data) {
+          setPersonaInfo({
+            is_enabled: Boolean(data.is_enabled),
+            name: data.name || 'You',
+            tone: data.communication_tone || 'Direct & Concise'
+          });
+        }
+      })
+      .catch((err) => console.debug('Could not load persona in chat:', err));
+  }, []);
+
+  const togglePersonaVoice = async () => {
+    const nextState = !personaInfo.is_enabled;
+    setPersonaInfo((prev) => ({ ...prev, is_enabled: nextState }));
+    try {
+      await fetch(apiUrl('/persona'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_enabled: nextState })
+      });
+    } catch (e) {
+      console.warn('Failed to update persona toggle:', e);
+    }
+  };
 
   // Load existing session thread if sessionId provided
   useEffect(() => {
@@ -156,6 +191,50 @@ export const ChatBox: React.FC<ChatBoxProps> = ({ sessionId, onSessionCreated })
 
   return (
     <div className="chat-container glass-panel">
+      {/* Persona Voice Status Bar */}
+      <div style={{
+        padding: '10px 18px',
+        background: personaInfo.is_enabled ? 'rgba(139, 92, 246, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: '0.82rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Sparkles size={16} color={personaInfo.is_enabled ? 'var(--accent-violet)' : 'var(--text-muted)'} />
+          <span>
+            {personaInfo.is_enabled ? (
+              <>
+                <strong style={{ color: 'var(--accent-violet)' }}>SecondSelf Voice:</strong> Speaking as <em>{personaInfo.name}</em> ({personaInfo.tone})
+              </>
+            ) : (
+              <span style={{ color: 'var(--text-muted)' }}>Neutral AI Assistant Mode</span>
+            )}
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={togglePersonaVoice}
+          title="Toggle Personalized SecondSelf Voice"
+          style={{
+            background: 'none',
+            border: 'none',
+            color: personaInfo.is_enabled ? 'var(--accent-violet)' : 'var(--text-muted)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: '0.78rem',
+            fontWeight: 600
+          }}
+        >
+          {personaInfo.is_enabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+          {personaInfo.is_enabled ? 'Voice Active' : 'Enable Voice'}
+        </button>
+      </div>
+
       {/* Messages Scroll Area */}
       <div className="chat-messages-box">
         {messages.map((msg) => (
