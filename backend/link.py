@@ -106,11 +106,16 @@ def recursive_text_split(
     return final_chunks if final_chunks else [text_content]
 
 def compute_embeddings(texts: List[str]) -> np.ndarray:
-    """Compute dense vectors using SentenceTransformer."""
+    """Compute dense vectors using SentenceTransformer with low memory footprint."""
     if not texts:
         return np.empty((0, settings.EMBEDDING_DIMENSION), dtype=np.float32)
     model = get_embedding_model()
-    embeddings = model.encode(texts, convert_to_numpy=True, normalize_embeddings=True)
+    try:
+        import torch
+        with torch.inference_mode():
+            embeddings = model.encode(texts, batch_size=8, convert_to_numpy=True, normalize_embeddings=True, show_progress_bar=False)
+    except Exception:
+        embeddings = model.encode(texts, batch_size=8, convert_to_numpy=True, normalize_embeddings=True, show_progress_bar=False)
     return embeddings.astype(np.float32)
 
 async def chunk_and_index_note(note: Note, content: str, db: AsyncSession) -> List[Chunk]:
@@ -168,14 +173,10 @@ async def compute_semantic_links(
     if len(all_notes) < 2:
         return []
 
-    # Get document representations
-    note_vectors: Dict[str, np.ndarray] = {}
-    model = get_embedding_model()
-    
-    for n in all_notes:
-        doc_text = f"{n.title}. {n.summary or ''}"
-        vec = model.encode([doc_text], convert_to_numpy=True, normalize_embeddings=True)[0]
-        note_vectors[n.id] = vec.astype(np.float32)
+    # Get document representations efficiently in batch
+    doc_texts = [f"{n.title}. {(n.summary or '')[:300]}" for n in all_notes]
+    all_vecs = compute_embeddings(doc_texts)
+    note_vectors = {n.id: all_vecs[i] for i, n in enumerate(all_notes)}
 
     # Clean existing links if recalculating all or for target
     if target_note_id:

@@ -36,6 +36,19 @@ async def lifespan(app: FastAPI):
     # 2. Vector Store status check
     logger.info(f"Vector Store initialized. Total indexed vectors: {vector_store.count()}")
     
+    # 3. Check if DB is empty and auto-seed initial knowledge base
+    async with async_session_maker() as session:
+        try:
+            count_res = await session.execute(select(func.count(Note.id)))
+            current_count = count_res.scalar() or 0
+            if current_count == 0:
+                logger.info("Empty database detected. Auto-seeding knowledge base in background...")
+                import asyncio
+                from backend.seed_demo_data import seed_knowledge_base
+                asyncio.create_task(seed_knowledge_base())
+        except Exception as seed_check_err:
+            logger.warning(f"Startup seed check warning: {seed_check_err}")
+
     yield
     
     # Shutdown
@@ -115,6 +128,17 @@ async def health_check():
             "notes_count": notes_count,
             "links_count": links_count
         }
+    }
+
+@app.post("/seed", tags=["System"])
+async def trigger_seed():
+    """Trigger on-demand knowledge base seeding."""
+    import asyncio
+    from backend.seed_demo_data import seed_knowledge_base
+    asyncio.create_task(seed_knowledge_base())
+    return {
+        "status": "success",
+        "message": "Seeding task started in background."
     }
 
 # Mount Static Files for Production Bundle if available
