@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dropzone } from '../components/Dropzone.tsx';
 import { Sparkles, RefreshCw, FileText, CheckCircle2, Clock } from 'lucide-react';
+import { apiUrl } from '../config/api.ts';
 
 export const CapturePage: React.FC = () => {
   const [recentNotes, setRecentNotes] = useState<any[]>([]);
@@ -10,7 +11,7 @@ export const CapturePage: React.FC = () => {
   const fetchRecentCaptures = async () => {
     setLoadingNotes(true);
     try {
-      const res = await fetch('/capture?limit=15');
+      const res = await fetch(apiUrl('/capture?limit=15'));
       if (res.ok) {
         const data = await res.json();
         setRecentNotes(data);
@@ -54,7 +55,7 @@ export const CapturePage: React.FC = () => {
       ];
 
       for (const item of demoCaptures) {
-        const res = await fetch('/capture/note', {
+        const res = await fetch(apiUrl('/capture/note'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title: item.title, content: item.content })
@@ -62,12 +63,12 @@ export const CapturePage: React.FC = () => {
         if (res.ok) {
           const data = await res.json();
           // Classify & link
-          await fetch('/classify', {
+          await fetch(apiUrl('/classify'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ note_id: data.id })
           });
-          await fetch('/link', {
+          await fetch(apiUrl('/link'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ note_id: data.id })

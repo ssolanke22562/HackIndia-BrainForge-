@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { UploadCloud, Globe, Edit3, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { apiUrl } from '../config/api.ts';
 
 interface DropzoneProps {
   onCaptureComplete: (noteId: string) => void;
@@ -23,7 +24,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
     try {
       // 1. Trigger Classification
       setStatusMessage('Classifying into PARA Framework...');
-      await fetch('/classify', {
+      await fetch(apiUrl('/classify'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ note_id: noteId })
@@ -31,7 +32,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
 
       // 2. Trigger Auto-Linking & Embeddings
       setStatusMessage('Generating embeddings & semantic links...');
-      await fetch('/link', {
+      await fetch(apiUrl('/link'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ note_id: noteId })
@@ -61,7 +62,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
     formData.append('file', file);
 
     try {
-      const res = await fetch('/capture/upload', {
+      const res = await fetch(apiUrl('/capture/upload'), {
         method: 'POST',
         body: formData
       });
@@ -96,7 +97,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
     setStatusMessage('Fetching web readability markdown...');
 
     try {
-      const res = await fetch('/capture/link', {
+      const res = await fetch(apiUrl('/capture/link'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: urlInput.trim() })
@@ -126,7 +127,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
     setStatusMessage('Capturing scratchpad note...');
 
     try {
-      const res = await fetch('/capture/note', {
+      const res = await fetch(apiUrl('/capture/note'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

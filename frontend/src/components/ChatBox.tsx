@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, BookOpen, Loader2 } from 'lucide-react';
 import { CitationModal } from './CitationModal.tsx';
+import { apiUrl } from '../config/api.ts';
 
 interface Message {
   id: string;
@@ -44,7 +45,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({ sessionId, onSessionCreated })
   useEffect(() => {
     if (sessionId) {
       setActiveSessionId(sessionId);
-      fetch(`/history/${sessionId}`)
+      fetch(apiUrl(`/history/${sessionId}`))
         .then((res) => res.json())
         .then((data) => {
           if (data.messages && data.messages.length > 0) {
@@ -71,7 +72,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({ sessionId, onSessionCreated })
     setLoading(true);
 
     try {
-      const res = await fetch('/ask', {
+      const res = await fetch(apiUrl('/ask'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

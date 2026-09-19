@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/(capture|classify|link|graph|ask|history|health|api)(.*)",
+      "destination": "https://YOUR_RAILWAY_URL.up.railway.app/$1$2"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

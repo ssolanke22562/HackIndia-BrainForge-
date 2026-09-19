@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GraphView } from '../components/GraphView.tsx';
 import { Search, RefreshCw, X, Network as NetworkIcon } from 'lucide-react';
+import { apiUrl } from '../config/api.ts';
 
 export const GraphPage: React.FC = () => {
   const [graphData, setGraphData] = useState<{ nodes: any[]; edges: any[]; stats?: any }>({ nodes: [], edges: [] });
@@ -16,7 +17,7 @@ export const GraphPage: React.FC = () => {
       if (selectedCategory !== 'all') params.append('category', selectedCategory);
       if (searchQuery.trim()) params.append('search', searchQuery.trim());
 
-      const res = await fetch(`/graph?${params.toString()}`);
+      const res = await fetch(apiUrl(`/graph?${params.toString()}`));
       if (res.ok) {
         const data = await res.json();
         setGraphData(data);

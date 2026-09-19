@@ -4,6 +4,7 @@ import { CapturePage } from './pages/CapturePage.tsx';
 import { GraphPage } from './pages/GraphPage.tsx';
 import { AskPage } from './pages/AskPage.tsx';
 import { HistoryPage } from './pages/HistoryPage.tsx';
+import { apiUrl } from './config/api.ts';
 import './styles/index.css';
 import './styles/components.css';
 
@@ -15,7 +16,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     const fetchHealth = async () => {
       try {
-        const res = await fetch('/health');
+        const res = await fetch(apiUrl('/health'));
         if (res.ok) {
           const data = await res.json();
           setServerStatus(data.status === 'healthy' ? 'healthy' : 'offline');

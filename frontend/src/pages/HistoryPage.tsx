@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, Trash2, ArrowRight, RefreshCw, BookOpen } from 'lucide-react';
 import { CitationModal } from '../components/CitationModal.tsx';
+import { apiUrl } from '../config/api.ts';
 
 export const HistoryPage: React.FC = () => {
   const [sessions, setSessions] = useState<any[]>([]);
@@ -13,7 +14,7 @@ export const HistoryPage: React.FC = () => {
   const fetchSessions = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/history');
+      const res = await fetch(apiUrl('/history'));
       if (res.ok) {
         const text = await res.text();
         if (text) {
@@ -35,7 +36,7 @@ export const HistoryPage: React.FC = () => {
 
   const fetchSessionThread = async (sessionId: string) => {
     try {
-      const res = await fetch(`/history/${sessionId}`);
+      const res = await fetch(apiUrl(`/history/${sessionId}`));
       if (res.ok) {
         const text = await res.text();
         if (text) {
@@ -55,7 +56,7 @@ export const HistoryPage: React.FC = () => {
   const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const res = await fetch(`/history/${sessionId}`, { method: 'DELETE' });
+      const res = await fetch(apiUrl(`/history/${sessionId}`), { method: 'DELETE' });
       if (res.ok) {
         setSessions(sessions.filter((s) => s.id !== sessionId));
         if (selectedSession?.id === sessionId) {
@@ -76,7 +77,7 @@ export const HistoryPage: React.FC = () => {
     setAnswering(true);
 
     try {
-      const res = await fetch(`/history/${selectedSession.id}/continue`, {
+      const res = await fetch(apiUrl(`/history/${selectedSession.id}/continue`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question })

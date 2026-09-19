@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     # API Keys
     GROQ_API_KEY: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
+    DEEPSEEK_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
 
     # Storage Paths
@@ -43,7 +44,7 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_CSV_TEXT_MB: int = 10
 
     # CORS Settings
-    CORS_ORIGINS: list[str] = [
+    CORS_ORIGINS: list[str] | str = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
@@ -51,6 +52,14 @@ class Settings(BaseSettings):
         "http://localhost:8000",
         "http://127.0.0.1:8000"
     ]
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        if isinstance(self.CORS_ORIGINS, str):
+            if self.CORS_ORIGINS.strip() == "*":
+                return ["*"]
+            return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+        return self.CORS_ORIGINS
 
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parent.parent / ".env",
