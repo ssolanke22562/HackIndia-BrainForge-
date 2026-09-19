@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  User, 
   Sparkles, 
   Save, 
   RefreshCw, 
@@ -167,10 +166,23 @@ export const PersonaPage: React.FC = () => {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: '1.875rem', fontWeight: 800, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <User size={28} color="var(--accent-violet)" />
-            SecondSelf Voice & Persona Profile
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
+            <img
+              src="/logo.png"
+              alt="SecondSelf"
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 10,
+                border: '1.5px solid rgba(139, 92, 246, 0.4)',
+                boxShadow: '0 0 14px rgba(139, 92, 246, 0.35)',
+                objectFit: 'cover'
+              }}
+            />
+            <h1 style={{ fontSize: '1.875rem', fontWeight: 800 }}>
+              SecondSelf Voice & Persona Profile
+            </h1>
+          </div>
           <p style={{ color: 'var(--text-secondary)' }}>
             Train SecondSelf to speak, reason, and answer in <strong>your exact words and communication style</strong> during RAG synthesis.
           </p>

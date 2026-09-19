@@ -19,19 +19,23 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   return (
     <header className="navbar">
-      <div className="nav-brand">
-        <div style={{
-          width: 34,
-          height: 34,
-          borderRadius: 8,
-          background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 0 12px rgba(139, 92, 246, 0.4)'
-        }}>
-          <Share2 size={20} color="#ffffff" />
-        </div>
+      <div className="nav-brand" style={{ cursor: 'pointer' }} onClick={() => setActiveTab('persona')}>
+        <img
+          src="/logo.png"
+          alt="SecondSelf Logo"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            objectFit: 'cover',
+            boxShadow: '0 0 14px rgba(139, 92, 246, 0.45)',
+            border: '1px solid rgba(139, 92, 246, 0.3)'
+          }}
+          onError={(e) => {
+            // Fallback if image path fails
+            (e.target as HTMLElement).style.display = 'none';
+          }}
+        />
         <span>Second<span className="nav-brand-gradient">Self</span></span>
       </div>
 
