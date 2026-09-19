@@ -10,7 +10,7 @@ import './styles/index.css';
 import './styles/components.css';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'capture' | 'graph' | 'ask' | 'history' | 'persona'>('capture');
+  const [activeTab, setActiveTab] = useState<'persona' | 'capture' | 'graph' | 'ask' | 'history'>('persona');
   const [serverStatus, setServerStatus] = useState<'healthy' | 'offline' | 'checking'>('checking');
   const [stats, setStats] = useState({ notes_count: 0, links_count: 0 });
 
@@ -46,11 +46,11 @@ export const App: React.FC = () => {
         serverStatus={serverStatus}
       />
       <main className="main-content">
+        {activeTab === 'persona' && <PersonaPage />}
         {activeTab === 'capture' && <CapturePage />}
         {activeTab === 'graph' && <GraphPage />}
         {activeTab === 'ask' && <AskPage />}
         {activeTab === 'history' && <HistoryPage />}
-        {activeTab === 'persona' && <PersonaPage />}
       </main>
     </div>
   );

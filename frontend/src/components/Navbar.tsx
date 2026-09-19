@@ -37,6 +37,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       <nav className="nav-links">
         <button
+          className={`nav-pill ${activeTab === 'persona' ? 'active' : ''}`}
+          onClick={() => setActiveTab('persona')}
+        >
+          <User size={16} />
+          <span>My Voice</span>
+        </button>
+        <button
           className={`nav-pill ${activeTab === 'capture' ? 'active' : ''}`}
           onClick={() => setActiveTab('capture')}
         >
@@ -63,13 +70,6 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <History size={16} />
           <span>History</span>
-        </button>
-        <button
-          className={`nav-pill ${activeTab === 'persona' ? 'active' : ''}`}
-          onClick={() => setActiveTab('persona')}
-        >
-          <User size={16} />
-          <span>My Voice</span>
         </button>
       </nav>
 
