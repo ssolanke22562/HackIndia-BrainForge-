@@ -55,17 +55,28 @@ const TONE_PRESETS = [
 ];
 
 export const PersonaPage: React.FC = () => {
-  const [formData, setFormData] = useState<PersonaData>({
-    name: 'SecondSelf User',
-    role_profession: 'Knowledge Worker & Researcher',
-    communication_tone: 'Direct, technical, and concise with zero fluff',
-    perspective: 'First-Person (I, my)',
-    custom_vocabulary: 'tradeoffs, architecture, synthesis, high-leverage, action items',
-    writing_sample: '',
-    response_format: 'TL;DR summary first, followed by clear bullet points and actionable takeaways',
-    is_enabled: true
-  });
+  const getInitialPersona = (): PersonaData => {
+    try {
+      const cached = localStorage.getItem('secondself_persona_cached');
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (e) {
+      console.warn('Failed to parse cached persona:', e);
+    }
+    return {
+      name: 'SecondSelf User',
+      role_profession: 'Knowledge Worker & Researcher',
+      communication_tone: 'Direct, technical, and concise with zero fluff',
+      perspective: 'First-Person (I, my)',
+      custom_vocabulary: 'tradeoffs, architecture, synthesis, high-leverage, action items',
+      writing_sample: '',
+      response_format: 'TL;DR summary first, followed by clear bullet points and actionable takeaways',
+      is_enabled: true
+    };
+  };
 
+  const [formData, setFormData] = useState<PersonaData>(getInitialPersona);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
@@ -77,12 +88,12 @@ export const PersonaPage: React.FC = () => {
   }, []);
 
   const fetchPersona = async () => {
-    setLoading(true);
     try {
       const res = await fetch(apiUrl('/persona'));
       if (res.ok) {
         const data = await res.json();
         setFormData(data);
+        localStorage.setItem('secondself_persona_cached', JSON.stringify(data));
       }
     } catch (err) {
       console.error('Failed to load persona:', err);
@@ -105,6 +116,7 @@ export const PersonaPage: React.FC = () => {
       if (res.ok) {
         const data = await res.json();
         setFormData(data);
+        localStorage.setItem('secondself_persona_cached', JSON.stringify(data));
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 4000);
       }

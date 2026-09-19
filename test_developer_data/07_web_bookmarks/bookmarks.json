@@ -1,0 +1,76 @@
+[
+  {
+    "title": "FastAPI Official Documentation",
+    "url": "https://fastapi.tiangolo.com/",
+    "category": "Resources",
+    "tags": [
+      "python",
+      "api",
+      "asyncio",
+      "fastapi",
+      "backend"
+    ],
+    "description": "FastAPI framework, high performance, easy to learn, fast to code, ready for production."
+  },
+  {
+    "title": "Sentence-Transformers: all-MiniLM-L6-v2 Model Card",
+    "url": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2",
+    "category": "Resources",
+    "tags": [
+      "ml",
+      "embeddings",
+      "vector-search",
+      "faiss"
+    ],
+    "description": "384-dimensional dense vector embedding model optimized for fast semantic search and clustering."
+  },
+  {
+    "title": "Groq LPU Developer Quickstart & API Reference",
+    "url": "https://console.groq.com/docs/quickstart",
+    "category": "Resources",
+    "tags": [
+      "llm",
+      "groq",
+      "inference",
+      "rag",
+      "lpu"
+    ],
+    "description": "Ultra-low latency LPU AI inference with 500+ tokens/sec on LLaMA-3.3 70B models."
+  },
+  {
+    "title": "Tiago Forte - Building a Second Brain & PARA Framework",
+    "url": "https://fortelabs.com/blog/para/",
+    "category": "Areas",
+    "tags": [
+      "productivity",
+      "para",
+      "knowledge-management",
+      "organization"
+    ],
+    "description": "The PARA Method: A universal system for organizing digital information across Projects, Areas, Resources, and Archives."
+  },
+  {
+    "title": "SQLite WAL Mode and Concurrency Tuning Guide",
+    "url": "https://www.sqlite.org/wal.html",
+    "category": "Resources",
+    "tags": [
+      "database",
+      "sqlite",
+      "wal",
+      "performance",
+      "acid"
+    ],
+    "description": "Technical deep dive into SQLite Write-Ahead Logging, multi-reader concurrent transactions, and checkpointing."
+  },
+  {
+    "title": "Martin Fowler: Microservices Architecture & Patterns",
+    "url": "https://martinfowler.com/articles/microservices.html",
+    "category": "Resources",
+    "tags": [
+      "architecture",
+      "microservices",
+      "distributed-systems"
+    ],
+    "description": "Foundational architectural patterns, service boundaries, asynchronous events, and decoupled data storage."
+  }
+]

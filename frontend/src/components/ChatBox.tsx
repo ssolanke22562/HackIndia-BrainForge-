@@ -20,19 +20,39 @@ interface Message {
 interface ChatBoxProps {
   sessionId?: string;
   onSessionCreated?: (sessionId: string) => void;
+  onNewChat?: () => void;
 }
 
-export const ChatBox: React.FC<ChatBoxProps> = ({ sessionId, onSessionCreated }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome-msg',
-      role: 'assistant',
-      content: 'Hello! I am your SecondSelf AI Second Brain. Ask me anything across your captured notes, documents, voice memos, and bookmarks.'
+const DEFAULT_WELCOME_MSG: Message = {
+  id: 'welcome-msg',
+  role: 'assistant',
+  content: 'Hello! I am your SecondSelf AI Second Brain. Ask me anything across your captured notes, documents, voice memos, and bookmarks.'
+};
+
+export const ChatBox: React.FC<ChatBoxProps> = ({ sessionId, onSessionCreated, onNewChat }) => {
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const cached = localStorage.getItem('secondself_cached_chat_messages');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to parse cached chat messages:', e);
     }
-  ]);
-  const [input, setInput] = useState('');
+    return [DEFAULT_WELCOME_MSG];
+  });
+
+  const [input, setInput] = useState(() => {
+    return localStorage.getItem('secondself_chat_draft_input') || '';
+  });
+
   const [loading, setLoading] = useState(false);
-  const [activeSessionId, setActiveSessionId] = useState<string | undefined>(sessionId);
+  const [activeSessionId, setActiveSessionId] = useState<string | undefined>(() => {
+    return sessionId || localStorage.getItem('secondself_current_session_id') || undefined;
+  });
   const [selectedCitation, setSelectedCitation] = useState<any | null>(null);
   const [personaInfo, setPersonaInfo] = useState<{ is_enabled: boolean; name: string; tone: string }>({
     is_enabled: true,
@@ -45,6 +65,28 @@ export const ChatBox: React.FC<ChatBoxProps> = ({ sessionId, onSessionCreated })
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Persist messages cache to localStorage
+  useEffect(() => {
+    try {
+      if (messages.length > 0) {
+        localStorage.setItem('secondself_cached_chat_messages', JSON.stringify(messages));
+      }
+    } catch (e) {
+      console.warn('Failed to cache chat messages:', e);
+    }
+  }, [messages]);
+
+  // Handle draft input persistence
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInput(val);
+    if (val) {
+      localStorage.setItem('secondself_chat_draft_input', val);
+    } else {
+      localStorage.removeItem('secondself_chat_draft_input');
+    }
+  };
 
   // Load Persona Settings
   useEffect(() => {
@@ -76,18 +118,25 @@ export const ChatBox: React.FC<ChatBoxProps> = ({ sessionId, onSessionCreated })
     }
   };
 
-  // Load existing session thread if sessionId provided
+  // Synchronize when sessionId prop or activeSessionId changes
   useEffect(() => {
-    if (sessionId) {
-      setActiveSessionId(sessionId);
-      fetch(apiUrl(`/history/${sessionId}`))
+    const targetSessionId = sessionId || activeSessionId;
+    if (targetSessionId) {
+      setActiveSessionId(targetSessionId);
+      localStorage.setItem('secondself_current_session_id', targetSessionId);
+      fetch(apiUrl(`/history/${targetSessionId}`))
         .then((res) => res.json())
         .then((data) => {
           if (data.messages && data.messages.length > 0) {
             setMessages(data.messages);
           }
         })
-        .catch((err) => console.error('Failed to load session:', err));
+        .catch((err) => console.error('Failed to load session thread:', err));
+    } else if (sessionId === undefined && activeSessionId === undefined) {
+      // Clean reset
+      setMessages([DEFAULT_WELCOME_MSG]);
+      localStorage.removeItem('secondself_cached_chat_messages');
+      localStorage.removeItem('secondself_current_session_id');
     }
   }, [sessionId]);
 
@@ -98,9 +147,10 @@ export const ChatBox: React.FC<ChatBoxProps> = ({ sessionId, onSessionCreated })
     const userQuestion = input.trim();
     const userMsgId = 'msg-' + Date.now();
     setInput('');
+    localStorage.removeItem('secondself_chat_draft_input');
 
     const newMessages: Message[] = [
-      ...messages,
+      ...messages.filter((m) => m.id !== 'welcome-msg' || messages.length > 1),
       { id: userMsgId, role: 'user', content: userQuestion }
     ];
     setMessages(newMessages);
@@ -123,6 +173,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({ sessionId, onSessionCreated })
       const data = await res.json();
       if (!activeSessionId && data.session_id) {
         setActiveSessionId(data.session_id);
+        localStorage.setItem('secondself_current_session_id', data.session_id);
         onSessionCreated?.(data.session_id);
       }
 
@@ -214,25 +265,49 @@ export const ChatBox: React.FC<ChatBoxProps> = ({ sessionId, onSessionCreated })
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={togglePersonaVoice}
-          title="Toggle Personalized SecondSelf Voice"
-          style={{
-            background: 'none',
-            border: 'none',
-            color: personaInfo.is_enabled ? 'var(--accent-violet)' : 'var(--text-muted)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontSize: '0.78rem',
-            fontWeight: 600
-          }}
-        >
-          {personaInfo.is_enabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
-          {personaInfo.is_enabled ? 'Voice Active' : 'Enable Voice'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {messages.length > 1 && (
+            <button
+              type="button"
+              onClick={() => {
+                setMessages([DEFAULT_WELCOME_MSG]);
+                setActiveSessionId(undefined);
+                localStorage.removeItem('secondself_cached_chat_messages');
+                localStorage.removeItem('secondself_current_session_id');
+                onNewChat?.();
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+                textDecoration: 'underline'
+              }}
+            >
+              Start New Thread
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={togglePersonaVoice}
+            title="Toggle Personalized SecondSelf Voice"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: personaInfo.is_enabled ? 'var(--accent-violet)' : 'var(--text-muted)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: '0.78rem',
+              fontWeight: 600
+            }}
+          >
+            {personaInfo.is_enabled ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+            {personaInfo.is_enabled ? 'Voice Active' : 'Enable Voice'}
+          </button>
+        </div>
       </div>
 
       {/* Messages Scroll Area */}
@@ -292,7 +367,7 @@ export const ChatBox: React.FC<ChatBoxProps> = ({ sessionId, onSessionCreated })
           className="input-field"
           placeholder="Ask anything about your notes, PDFs, bookmarks, or recordings..."
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleInputChange}
           disabled={loading}
         />
         <button type="submit" className="btn btn-primary" disabled={loading || !input.trim()}>

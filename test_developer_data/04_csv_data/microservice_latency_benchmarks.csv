@@ -1,0 +1,10 @@
+Endpoint,p50_ms,p90_ms,p95_ms,p99_ms,Throughput_RPS,Error_Rate_Pct
+/capture/note,18.2,35.0,48.0,85.0,1250,0.01
+/capture/upload (PDF 10p),142.0,280.0,390.0,620.0,45,0.05
+/capture/upload (Image OCR),310.5,520.0,680.0,950.0,28,0.12
+/capture/upload (Audio STT),480.0,890.0,1120.0,1650.0,18,0.08
+/capture/link (Web Scrape),210.0,450.0,580.0,890.0,65,0.25
+/classify/batch (PARA),340.0,620.0,810.0,1250.0,35,0.02
+/link/all (FAISS Sim),32.5,58.0,74.0,115.0,850,0.0
+/ask (Hybrid RAG),410.0,780.0,950.0,1420.0,42,0.04
+/graph/data (3D Force),14.5,25.0,32.0,48.0,2100,0.0

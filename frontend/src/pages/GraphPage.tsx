@@ -5,8 +5,12 @@ import { apiUrl } from '../config/api.ts';
 
 export const GraphPage: React.FC = () => {
   const [graphData, setGraphData] = useState<{ nodes: any[]; edges: any[]; stats?: any }>({ nodes: [], edges: [] });
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>(() => {
+    return localStorage.getItem('secondself_graph_category') || 'all';
+  });
+  const [searchQuery, setSearchQuery] = useState(() => {
+    return localStorage.getItem('secondself_graph_search') || '';
+  });
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -21,6 +25,15 @@ export const GraphPage: React.FC = () => {
       if (res.ok) {
         const data = await res.json();
         setGraphData(data);
+
+        // Restore selected node if saved
+        const savedNodeId = localStorage.getItem('secondself_graph_selected_node_id');
+        if (savedNodeId && Array.isArray(data.nodes)) {
+          const found = data.nodes.find((n: any) => n.id === savedNodeId);
+          if (found) {
+            setSelectedNode(found);
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to load graph data:', err);
@@ -33,6 +46,20 @@ export const GraphPage: React.FC = () => {
     fetchGraphData();
   }, [selectedCategory]);
 
+  const handleCategoryChange = (cat: string) => {
+    setSelectedCategory(cat);
+    localStorage.setItem('secondself_graph_category', cat);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    if (val) {
+      localStorage.setItem('secondself_graph_search', val);
+    } else {
+      localStorage.removeItem('secondself_graph_search');
+    }
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     fetchGraphData();
@@ -42,7 +69,13 @@ export const GraphPage: React.FC = () => {
     const node = graphData.nodes.find((n) => n.id === nodeId);
     if (node) {
       setSelectedNode(node);
+      localStorage.setItem('secondself_graph_selected_node_id', nodeId);
     }
+  };
+
+  const handleCloseInspector = () => {
+    setSelectedNode(null);
+    localStorage.removeItem('secondself_graph_selected_node_id');
   };
 
   return (
@@ -67,7 +100,7 @@ export const GraphPage: React.FC = () => {
               <button
                 key={cat}
                 className={`tab-pill ${selectedCategory === cat ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => handleCategoryChange(cat)}
               >
                 {cat.charAt(0).toUpperCase() + cat.slice(1)}
               </button>
@@ -82,7 +115,7 @@ export const GraphPage: React.FC = () => {
               placeholder="Search graph..."
               style={{ width: 180, padding: '6px 10px', fontSize: '0.85rem' }}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
             <button type="submit" className="btn btn-secondary" style={{ padding: '6px 12px' }}>
               <Search size={14} />
@@ -139,7 +172,7 @@ export const GraphPage: React.FC = () => {
               >
                 {selectedNode.category}
               </span>
-              <button className="btn-icon" onClick={() => setSelectedNode(null)}>
+              <button className="btn-icon" onClick={handleCloseInspector}>
                 <X size={16} />
               </button>
             </div>

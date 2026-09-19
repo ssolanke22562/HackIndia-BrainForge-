@@ -1,0 +1,86 @@
+[
+  {
+    "category": "Architecture & Systems Design",
+    "prompt": "How does SecondSelf handle large PDF and image uploads without blocking FastAPI worker threads?",
+    "expected_sources": [
+      "01_markdown_notes/architecture_rfc_event_driven_pipeline.md",
+      "02_pdf_documents/Distributed_Systems_Design_Spec.pdf"
+    ],
+    "key_verification_facts": "Two-phase ingestion, raw stash to disk, Redis Stream async worker queue, SHA-256 deduplication."
+  },
+  {
+    "category": "Incidents & Postmortems",
+    "prompt": "What caused the database lock errors during the September 14th incident and how did we fix it?",
+    "expected_sources": [
+      "01_markdown_notes/microservices_incident_postmortem.md",
+      "09_voice_inputs_and_transcripts/voice_notes_transcripts.md"
+    ],
+    "key_verification_facts": "SQLite connection starvation, missing busy_timeout, fixed with PRAGMA busy_timeout=5000 and pool_size=20."
+  },
+  {
+    "category": "Sprint Backlog & Team Velocity",
+    "prompt": "What tasks are assigned in Sprint 18 and what is Priya working on?",
+    "expected_sources": [
+      "01_markdown_notes/sprint_q3_backend_roadmap.md"
+    ],
+    "key_verification_facts": "SEC-102 Whisper base.en transcription for voice memos, 5 points."
+  },
+  {
+    "category": "Performance & Telemetry Benchmarks",
+    "prompt": "What is the p50 and p95 latency for the /ask hybrid RAG endpoint according to our benchmark data?",
+    "expected_sources": [
+      "04_csv_data/microservice_latency_benchmarks.csv"
+    ],
+    "key_verification_facts": "p50 is 410.0 ms, p95 is 950.0 ms, error rate is 0.04%."
+  },
+  {
+    "category": "Database Optimization & Slow Queries",
+    "prompt": "Which SQL queries in our slow log had full table scans and how were they resolved?",
+    "expected_sources": [
+      "04_csv_data/database_query_slow_log_profiling.csv"
+    ],
+    "key_verification_facts": "Q_101 title LIKE scan converted to SQLite FTS5 BM25; Q_105 sender_id count fixed with compound index."
+  },
+  {
+    "category": "Coding Standards & Best Practices",
+    "prompt": "What is our policy on async database sessions and type hinting in backend services?",
+    "expected_sources": [
+      "03_word_documents/Backend_Coding_Standards_2026.docx"
+    ],
+    "key_verification_facts": "Mandatory aiosqlite and SQLAlchemy 2.0 async sessions, strict mypy type hints, Pydantic v2 schemas."
+  },
+  {
+    "category": "Cloud Infrastructure & Financial Budget",
+    "prompt": "What is our total monthly cloud infrastructure cost and which services are running on free tiers?",
+    "expected_sources": [
+      "03_word_documents/Cloud_Infrastructure_Budget_Q3.docx"
+    ],
+    "key_verification_facts": "Total $7.00/month for Railway/Render hosting; Groq LPU, Gemini API, Vercel, and Cloudflare on free tier."
+  },
+  {
+    "category": "Vector Similarity & Knowledge Graph",
+    "prompt": "How does the system prevent supernode explosion in the force-directed graph visualization?",
+    "expected_sources": [
+      "01_markdown_notes/architecture_rfc_event_driven_pipeline.md",
+      "06_audio_voice_memos/voice_standup_update_2026_09_19.txt"
+    ],
+    "key_verification_facts": "Cosine similarity threshold 0.70 with a hard cap of top-5 strongest neighbors per node."
+  },
+  {
+    "category": "Security & Authentication",
+    "prompt": "What is our JWT token expiration policy and how are access tokens rotated?",
+    "expected_sources": [
+      "02_pdf_documents/API_Security_and_Auth_Standards.pdf"
+    ],
+    "key_verification_facts": "15-minute access token, 7-day refresh token in HttpOnly SameSite=Strict cookies, 30-day JWKS key rotation."
+  },
+  {
+    "category": "Hybrid RAG & Reciprocal Rank Fusion",
+    "prompt": "How does the hybrid search combine dense FAISS vectors with sparse BM25 keyword search?",
+    "expected_sources": [
+      "06_audio_voice_memos/voice_architecture_sync_rag_pipeline.txt",
+      "05_images_and_diagrams/system_architecture_diagram.png"
+    ],
+    "key_verification_facts": "Top-8 dense from FAISS + Top-8 sparse from SQLite FTS5 merged using Reciprocal Rank Fusion with constant k=60."
+  }
+]

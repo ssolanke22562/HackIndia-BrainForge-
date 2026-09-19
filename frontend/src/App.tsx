@@ -10,9 +10,40 @@ import './styles/index.css';
 import './styles/components.css';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'persona' | 'capture' | 'graph' | 'ask' | 'history'>('persona');
+  const getInitialTab = (): 'persona' | 'capture' | 'graph' | 'ask' | 'history' => {
+    const hash = window.location.hash.replace('#', '') as any;
+    if (hash && ['persona', 'capture', 'graph', 'ask', 'history'].includes(hash)) {
+      return hash;
+    }
+    const saved = localStorage.getItem('secondself_active_tab') as any;
+    if (saved && ['persona', 'capture', 'graph', 'ask', 'history'].includes(saved)) {
+      return saved;
+    }
+    return 'persona';
+  };
+
+  const [activeTab, setActiveTab] = useState<'persona' | 'capture' | 'graph' | 'ask' | 'history'>(getInitialTab);
   const [serverStatus, setServerStatus] = useState<'healthy' | 'offline' | 'checking'>('checking');
   const [stats, setStats] = useState({ notes_count: 0, links_count: 0 });
+
+  const handleTabChange = (tab: 'persona' | 'capture' | 'graph' | 'ask' | 'history') => {
+    setActiveTab(tab);
+    localStorage.setItem('secondself_active_tab', tab);
+    window.location.hash = tab;
+  };
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '') as any;
+      if (hash && ['persona', 'capture', 'graph', 'ask', 'history'].includes(hash)) {
+        setActiveTab(hash);
+        localStorage.setItem('secondself_active_tab', hash);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
 
   useEffect(() => {
     const fetchHealth = async () => {
@@ -41,7 +72,7 @@ export const App: React.FC = () => {
     <div className="app-layout">
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         stats={stats}
         serverStatus={serverStatus}
       />

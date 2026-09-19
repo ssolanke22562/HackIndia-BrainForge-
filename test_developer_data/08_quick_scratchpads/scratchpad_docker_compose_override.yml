@@ -1,0 +1,21 @@
+# Docker Compose Dev Override Scratchpad
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - SQLITE_BUSY_TIMEOUT=5000
+      - FAISS_SIMILARITY_THRESHOLD=0.70
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    volumes:
+      - ./backend:/app/backend
+      - ./raw:/app/raw
+      - ./wiki:/app/wiki
+    restart: unless-stopped

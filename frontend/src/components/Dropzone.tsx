@@ -7,18 +7,65 @@ interface DropzoneProps {
 }
 
 export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
-  const [activeMode, setActiveMode] = useState<'upload' | 'link' | 'note'>('upload');
+  const [activeMode, setActiveMode] = useState<'upload' | 'link' | 'note'>(() => {
+    const saved = localStorage.getItem('secondself_dropzone_mode') as any;
+    if (saved && ['upload', 'link', 'note'].includes(saved)) {
+      return saved;
+    }
+    return 'upload';
+  });
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [statusType, setStatusType] = useState<'info' | 'success' | 'error'>('info');
 
-  // Link & Note inputs
-  const [urlInput, setUrlInput] = useState('');
-  const [noteTitle, setNoteTitle] = useState('');
-  const [noteContent, setNoteContent] = useState('');
+  // Link & Note inputs with localStorage draft persistence
+  const [urlInput, setUrlInput] = useState(() => {
+    return localStorage.getItem('secondself_draft_url') || '';
+  });
+  const [noteTitle, setNoteTitle] = useState(() => {
+    return localStorage.getItem('secondself_draft_note_title') || '';
+  });
+  const [noteContent, setNoteContent] = useState(() => {
+    return localStorage.getItem('secondself_draft_note_content') || '';
+  });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleModeChange = (mode: 'upload' | 'link' | 'note') => {
+    setActiveMode(mode);
+    localStorage.setItem('secondself_dropzone_mode', mode);
+  };
+
+  const handleUrlInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setUrlInput(val);
+    if (val) {
+      localStorage.setItem('secondself_draft_url', val);
+    } else {
+      localStorage.removeItem('secondself_draft_url');
+    }
+  };
+
+  const handleNoteTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setNoteTitle(val);
+    if (val) {
+      localStorage.setItem('secondself_draft_note_title', val);
+    } else {
+      localStorage.removeItem('secondself_draft_note_title');
+    }
+  };
+
+  const handleNoteContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setNoteContent(val);
+    if (val) {
+      localStorage.setItem('secondself_draft_note_content', val);
+    } else {
+      localStorage.removeItem('secondself_draft_note_content');
+    }
+  };
 
   const processPipeline = async (noteId: string) => {
     try {
@@ -110,6 +157,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
 
       const data = await res.json();
       setUrlInput('');
+      localStorage.removeItem('secondself_draft_url');
       await processPipeline(data.id);
     } catch (err: any) {
       setStatusType('error');
@@ -144,6 +192,8 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
       const data = await res.json();
       setNoteTitle('');
       setNoteContent('');
+      localStorage.removeItem('secondself_draft_note_title');
+      localStorage.removeItem('secondself_draft_note_content');
       await processPipeline(data.id);
     } catch (err: any) {
       setStatusType('error');
@@ -158,19 +208,19 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
       <div className="tab-pills" style={{ marginBottom: 20 }}>
         <button
           className={`tab-pill ${activeMode === 'upload' ? 'active' : ''}`}
-          onClick={() => setActiveMode('upload')}
+          onClick={() => handleModeChange('upload')}
         >
           <UploadCloud size={16} /> File Upload
         </button>
         <button
           className={`tab-pill ${activeMode === 'link' ? 'active' : ''}`}
-          onClick={() => setActiveMode('link')}
+          onClick={() => handleModeChange('link')}
         >
           <Globe size={16} /> Web Bookmark
         </button>
         <button
           className={`tab-pill ${activeMode === 'note' ? 'active' : ''}`}
-          onClick={() => setActiveMode('note')}
+          onClick={() => handleModeChange('note')}
         >
           <Edit3 size={16} /> Quick Scratchpad
         </button>
@@ -232,7 +282,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
               className="input-field"
               placeholder="https://example.com/blog/deep-learning-insights"
               value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
+              onChange={handleUrlInputChange}
               required
             />
           </div>
@@ -252,7 +302,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
               className="input-field"
               placeholder="Note Title (optional)"
               value={noteTitle}
-              onChange={(e) => setNoteTitle(e.target.value)}
+              onChange={handleNoteTitleChange}
             />
           </div>
           <div>
@@ -261,7 +311,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
               rows={4}
               placeholder="Type or paste your raw notes, action items, or references..."
               value={noteContent}
-              onChange={(e) => setNoteContent(e.target.value)}
+              onChange={handleNoteContentChange}
               required
             />
           </div>

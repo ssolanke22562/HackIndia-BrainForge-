@@ -1,0 +1,20 @@
+### QUICK SCRATCHPAD: API Testing cURL Commands
+
+# 1. Health check
+curl -X GET http://localhost:8000/health
+
+# 2. Upload capture note
+curl -X POST http://localhost:8000/capture/note \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Dev Scratchpad Note", "content": "Testing instant ingestion"}'
+
+# 3. Trigger hybrid Ask Brain RAG
+curl -X POST http://localhost:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What are our SQLite WAL configuration parameters?"}'
+
+# 4. Trigger full PARA classification batch
+curl -X POST http://localhost:8000/classify/batch
+
+# 5. Get Force Graph nodes and links
+curl -X GET http://localhost:8000/graph/data

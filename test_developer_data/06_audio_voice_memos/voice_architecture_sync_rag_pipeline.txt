@@ -1,0 +1,2 @@
+TRANSCRIPT:
+"Quick voice note regarding our hybrid search design sync. We agreed that when the user submits an Ask Brain query, we simultaneously query FAISS for the top-eight dense vector chunks and SQLite FTS5 for the top-eight sparse keyword chunks. Then Reciprocal Rank Fusion with constant k=60 will merge and rank the candidate citations before feeding them into the LLM prompt context."

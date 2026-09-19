@@ -7,9 +7,13 @@ export const HistoryPage: React.FC = () => {
   const [sessions, setSessions] = useState<any[]>([]);
   const [selectedSession, setSelectedSession] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
-  const [followUpInput, setFollowUpInput] = useState('');
+  const [followUpInput, setFollowUpInput] = useState(() => {
+    return localStorage.getItem('secondself_history_followup_draft') || '';
+  });
   const [answering, setAnswering] = useState(false);
   const [selectedCitation, setSelectedCitation] = useState<any | null>(null);
+
+  const savedSessionId = localStorage.getItem('secondself_history_selected_session');
 
   const fetchSessions = async () => {
     setLoading(true);
@@ -21,8 +25,11 @@ export const HistoryPage: React.FC = () => {
           const data = JSON.parse(text);
           if (Array.isArray(data)) {
             setSessions(data);
-            if (data.length > 0 && !selectedSession) {
-              fetchSessionThread(data[0].id);
+            if (data.length > 0) {
+              const targetId = (savedSessionId && data.some((s) => s.id === savedSessionId))
+                ? savedSessionId
+                : data[0].id;
+              fetchSessionThread(targetId);
             }
           }
         }
@@ -36,6 +43,7 @@ export const HistoryPage: React.FC = () => {
 
   const fetchSessionThread = async (sessionId: string) => {
     try {
+      localStorage.setItem('secondself_history_selected_session', sessionId);
       const res = await fetch(apiUrl(`/history/${sessionId}`));
       if (res.ok) {
         const text = await res.text();
@@ -61,10 +69,21 @@ export const HistoryPage: React.FC = () => {
         setSessions(sessions.filter((s) => s.id !== sessionId));
         if (selectedSession?.id === sessionId) {
           setSelectedSession(null);
+          localStorage.removeItem('secondself_history_selected_session');
         }
       }
     } catch (err) {
       console.error('Failed to delete session:', err);
+    }
+  };
+
+  const handleFollowUpInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setFollowUpInput(val);
+    if (val) {
+      localStorage.setItem('secondself_history_followup_draft', val);
+    } else {
+      localStorage.removeItem('secondself_history_followup_draft');
     }
   };
 
@@ -74,6 +93,7 @@ export const HistoryPage: React.FC = () => {
 
     const question = followUpInput.trim();
     setFollowUpInput('');
+    localStorage.removeItem('secondself_history_followup_draft');
     setAnswering(true);
 
     try {
@@ -204,7 +224,7 @@ export const HistoryPage: React.FC = () => {
                 className="input-field"
                 placeholder="Ask follow-up question in this conversation..."
                 value={followUpInput}
-                onChange={(e) => setFollowUpInput(e.target.value)}
+                onChange={handleFollowUpInputChange}
                 disabled={answering}
               />
               <button type="submit" className="btn btn-primary" disabled={answering || !followUpInput.trim()}>

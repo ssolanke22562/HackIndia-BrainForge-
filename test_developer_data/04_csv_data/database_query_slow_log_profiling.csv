@@ -1,0 +1,7 @@
+Query_ID,SQL_Signature,Exec_Time_ms,Rows_Examined,Index_Used,Optimization_Status
+Q_101,SELECT * FROM notes WHERE title LIKE '%query%',342.5,152000,None (Table Scan),Fixed: Converted to SQLite FTS5 BM25
+Q_102,"SELECT n.*, c.tag FROM notes n JOIN categories c ON n.id=c.note_id",185.0,84000,idx_categories_note_id,Optimized with Covering Index
+Q_103,SELECT * FROM vector_chunks WHERE similarity >= 0.70 ORDER BY similarity DESC LIMIT 8,18.2,384,FAISS Flat Index,Optimal
+Q_104,SELECT count(*) FROM raw_captures WHERE processed = 0,9.4,120,idx_raw_processed,Optimal
+Q_105,"SELECT sender_id, count(*) FROM chat_messages GROUP BY sender_id",78.1,45000,None,Fixed: Added Compound Index
+Q_106,SELECT * FROM notes WHERE deleted_at IS NULL ORDER BY updated_at DESC,14.0,152000,idx_notes_updated_at,Optimal
