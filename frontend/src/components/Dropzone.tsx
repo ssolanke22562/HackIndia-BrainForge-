@@ -100,6 +100,14 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
     console.warn(msg);
   };
 
+  const formatErrorMessage = (err: any, fallback: string): string => {
+    const msg = err?.message || '';
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('Load failed')) {
+      return 'Server is waking up or unreachable. Please wait ~10s and retry.';
+    }
+    return msg || fallback;
+  };
+
   const handleFileUpload = async (file: File) => {
     setIsProcessing(true);
     setStatusType('info');
@@ -115,7 +123,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         throw new Error(errData.detail || 'Upload failed');
       }
 
@@ -130,7 +138,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
       await processPipeline(data.id);
     } catch (err: any) {
       setStatusType('error');
-      setStatusMessage(err.message || 'Failed to ingest file.');
+      setStatusMessage(formatErrorMessage(err, 'Failed to ingest file.'));
       setIsProcessing(false);
     }
   };
@@ -151,7 +159,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         throw new Error(errData.detail || 'Web article fetch failed');
       }
 
@@ -161,7 +169,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
       await processPipeline(data.id);
     } catch (err: any) {
       setStatusType('error');
-      setStatusMessage(err.message || 'Failed to capture URL.');
+      setStatusMessage(formatErrorMessage(err, 'Failed to capture URL.'));
       setIsProcessing(false);
     }
   };
@@ -185,7 +193,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         throw new Error(errData.detail || 'Note capture failed');
       }
 
@@ -197,7 +205,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ onCaptureComplete }) => {
       await processPipeline(data.id);
     } catch (err: any) {
       setStatusType('error');
-      setStatusMessage(err.message || 'Failed to capture note.');
+      setStatusMessage(formatErrorMessage(err, 'Failed to capture note.'));
       setIsProcessing(false);
     }
   };
