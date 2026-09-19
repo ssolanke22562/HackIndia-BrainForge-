@@ -64,17 +64,15 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS Middleware
-_origins = settings.cors_origins_list
-_is_wildcard = "*" in _origins
-
+# CORS Middleware: Universal cross-origin support for all deployment domains
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if _is_wildcard else _origins,
-    allow_origin_regex=None if _is_wildcard else r"https://.*\.vercel\.app",
-    allow_credentials=False if _is_wildcard else True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=86400,
 )
 
 # Mount Routers
